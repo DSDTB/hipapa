@@ -48,6 +48,15 @@ SELECT * FROM tb_card_df
     c.execute(text(sql2))
     c.commit()
 
+#@st.cache_data()
+def focus_card_df(c,s):
+#     df = _c.execute("select * from tb_card")
+#     return df
+    sql=f"select * from tb_card where cname||pname||phone like '%{s}%' order by bm desc "
+
+    cur = c.execute(text(sql))
+    df=cur.fetchall()
+    return pd.DataFrame(df)
 
 # @st.cache_data()
 def all_card_df(c):

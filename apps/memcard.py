@@ -24,6 +24,7 @@ def app():
             data.to_sql("tb_card_df", con=conn, if_exists="replace", index=False)
             update_card_df(conn)
 
+
     @st.cache_data()
     def op_dict():
         rooms_df = op_room_df(conn)
@@ -34,9 +35,20 @@ def app():
 
     op_dict, op_dict_vk, op_rms = op_dict()
 
+    @st.cache_data()
+    def create_data(s):
+        #df = all_card_df(conn)
+        df=focus_card_df(conn,s)
+        if not df.empty:
+            df["sdate"] = pd.to_datetime(df["sdate"])
+            df["flag"] = df["flag"].astype("bool")
+            df["room"] = df["room"].replace(op_dict)
+        return df
+    
     # @st.cache_data()
-    def create_data():
+    def create_all_data():
         df = all_card_df(conn)
+        #df=focus_card_df(conn,s)
         if not df.empty:
             df["sdate"] = pd.to_datetime(df["sdate"])
             df["flag"] = df["flag"].astype("bool")
@@ -194,7 +206,14 @@ def app():
         except Exception as e:
             st.error("文件不规范，请重新上传！")
     with tab3:
+        
         st.empty().text("")
+
+        cdt=st.text_input("请输入姓名或手机号")
+        #if st.button("查询"):
+#         df_focus=create_data(cdt)
+#         data = card_editor(df_focus, op_rms, "card3")
+
 
         if "pre" not in st.session_state:
             st.session_state["pre"] = 1
@@ -209,9 +228,11 @@ def app():
         page = st.session_state.page
 
         page = page  # 页码数
-        limit = 3  # 每页的数据量
+        limit =  80 # 每页的数据量
+        
+        
 
-        df = create_data()
+        df = create_data(cdt)
         data_page = df[(int(page) - 1) * int(limit) : (int(page) * int(limit))]
 
         if not data_page.empty:
@@ -221,16 +242,16 @@ def app():
             data["room"] = data["room"].replace(op_dict_vk)
             page_num = sac.pagination(
                 total=len(df),
-                page_size=3,
+                page_size=80,
                 align="end",
                 jump=True,
                 show_total=True,
                 on_change=get_pre,
                 key="cmpage",
             )
-
+            
             if st.button("保存"):
                 data.to_sql("tb_card_df", con=conn, if_exists="replace", index=False)
                 update_card_df(conn)
-                # st.rerun()
-        st.write(df)
+
+
